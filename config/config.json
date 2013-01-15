@@ -1,0 +1,21 @@
+{ "network":  "ircn",
+  "hostname": "localhost",
+  "serverDescription": "Lalo, always groovie",
+  "serverName": "lalo",
+  "serverPassword": "$2a$10$XZwPx.FMH5XPgKvCUigQDe5Ss/OFAnVssDuxuUFpBAubrnCl0dzay",
+  "port": 6667,
+  "linkPort": 7777,
+  "motd": "",
+  "whoWasLimit": 10000,
+  "token": 1,
+  "opers": {
+    "malditogeek": { "password": "$2a$10$z4CH/f5NOzNCvGu7eVVFIOzDuwCIUEG/emdmZ0I2rEMv4x7.pOc56" }
+  },
+  "channels": {
+    "fwd": { "topic": "always flippin' tables" }
+  },
+  "pingTimeout": 120,
+  "maxNickLength": 30,
+  "key": "./config/key.pem",
+  "cert": "./config/cert.pem"
+}
