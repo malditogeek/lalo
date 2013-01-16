@@ -1,5 +1,7 @@
-var http  = require('http');
-var ss    = require('socketstream');
+var http      = require('http');
+var ss        = require('socketstream');
+var everyauth = require('everyauth');
+var User = require('./lib/user.js').User;
 
 // Define a single-page client
 ss.client.define('main', {
@@ -11,7 +13,12 @@ ss.client.define('main', {
 
 // Serve this client on the root URL
 ss.http.route('/', function(req, res){
-  res.serveClient('main');
+  if (!req.session.userId) {
+    res.writeHead(302, {'Location': '/auth/twitter'});
+    res.end();
+  } else {
+    res.serveClient('main');
+  }
 })
 
 // Code Formatters
@@ -29,9 +36,31 @@ if (ss.env == 'production') ss.client.packAssets();
 var server = http.Server(ss.http.middleware);
 server.listen(process.env.PORT_WWW || 5000);
 
+everyauth.twitter
+  .consumerKey(process.env.LALO_TWITTER_KEY)
+  .consumerSecret(process.env.LALO_TWITTER_SECRET)
+  .findOrCreateUser( function(session, accessToken, accessTokenSecret, twitterUserMetadata) {
+    session.userId  = twitterUserMetadata.screen_name;
+    session.name    = twitterUserMetadata.name;
+    session.nick    = twitterUserMetadata.screen_name;
+    session.save();
+    return true;
+  })
+  .redirectPath('/');
+
+ss.http.middleware.prepend(ss.http.connect.bodyParser());
+ss.http.middleware.append(everyauth.middleware());
+
 // Start SocketStream
 ss.start(server);
 
 // Start IRC server
-var IRCServer = require('./lib/server.js').Server;
-IRCServer.boot(ss);
+var ircServer = require('./lib/server.js').Server;
+var server = ircServer.boot(ss);
+var users = {};
+
+ss.api.add('irc', function(nick, command, args) {
+  if (!users[nick]) { users[nick] = new User(null, server); }
+  var user = users[nick];
+  server.commands[command].apply(server.commands, [user].concat(args));
+});

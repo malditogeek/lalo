@@ -3,6 +3,29 @@ ss.event.on 'privmsg', (json) ->
   App.messages.add(message)
   #$('.message').embedly()
 
+window.InputView = Backbone.View.extend({
+
+  events: {
+    'keypress': 'send'
+  }
+
+  initialize: ->
+
+  render: (eventName) ->
+    $(this.el).html(this.template())
+    return this
+
+  send: (e) ->
+    if e.keyCode == 13
+      message = $('#textbox')[0].value
+      if message != ''
+        $('#textbox')[0].value = ''
+        ss.rpc('chat.irc', 'PRIVMSG', ['#fwd', message])
+        $('#messages')[0].scrollTop = 10000
+ 
+})
+
+
 window.Message = Backbone.Model.extend({
   initialize: (message) ->
     this.set 'nick',   message.nick
@@ -24,18 +47,18 @@ window.MessagesCollection = Backbone.Collection.extend({
 window.MessagesView = Backbone.View.extend({
  
   tagName: 'ul'
-  className:'messages'
+  className: 'unstyled'
 
   initialize: ->
     self = this
     this.collection.bind("reset", this.render, this)
     this.collection.bind("add", (message) ->
-      $(self.el).prepend(new MessageItemView({model: message}).render().el)
+      $(self.el).append(new MessageItemView({model: message}).render().el)
     )
 
   render: (eventName) ->
     _.each(this.collection.models, (message) ->
-      $(this.el).prepend(new MessageItemView({model: message}).render().el)
+      $(this.el).append(new MessageItemView({model: message}).render().el)
     , this)
     return this
  
@@ -51,6 +74,8 @@ window.MessageItemView = Backbone.View.extend({
 
   render: ->
     $(this.el).html(this.template(this.model.toJSON()))
+    $(this.el).embedly()
+    $('#messages')[0].scrollTop = 10000
     return this
 
 })
@@ -65,6 +90,10 @@ AppRouter = Backbone.Router.extend({
     this.messages = new MessagesCollection()
     this.messagesView = new MessagesView({collection: this.messages})
     $('#messages').html(this.messagesView.render().el)
+
+    this.inputView = new InputView()
+    $('#input').html(this.inputView.render().el)
+
 
   root: ->
 
@@ -86,7 +115,7 @@ window.templateLoader = {
 }
 
 # Pre-laod templates and start the app.
-templateLoader.load(['MessageItemView'], ->
+templateLoader.load(['MessageItemView', 'InputView'], ->
   window.App = new AppRouter()
   Backbone.history.start()
 )

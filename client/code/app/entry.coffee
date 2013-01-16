@@ -3,11 +3,15 @@
 # Make 'ss' available to all modules and the browser console
 window.ss = require('socketstream')
 
+ss.server.on 'connect', ->
+  console.log 'Connected.'
+  ss.rpc('chat.connect')
+
 ss.server.on 'disconnect', ->
-  console.log('Oops, connection down...')
+  console.log 'Oops, connection down...'
 
 ss.server.on 'reconnect', ->
-  console.log('Yay, connection recovered!')
+  console.log 'Yay, connection recovered!'
 
 ss.server.on 'ready', ->
 
