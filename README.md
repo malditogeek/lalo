@@ -21,7 +21,7 @@ This will start an IRC server with the following details:
         Password: inhackwetrust
         SSL: enabled
 
-To try the Web interface, you'll need to (create a Twitter application)[https://dev.twitter.com/apps), use 'http://127.0.0.1:5000/' for the Website and 'http://127.0.0.1:5000/auth/twitter/callback' for the Callback URL.
+To try the Web interface, you'll need to [create a Twitter application](https://dev.twitter.com/apps), use 'http://127.0.0.1:5000/' for the Website and 'http://127.0.0.1:5000/auth/twitter/callback' for the Callback URL.
 
 Set the Twitter OAuth tokens:
 
