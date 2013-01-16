@@ -9,6 +9,7 @@ ss.server.on 'connect', ->
 
 ss.server.on 'disconnect', ->
   console.log 'Oops, connection down...'
+  alert 'Oops, connection lost. Reload the page'
 
 ss.server.on 'reconnect', ->
   console.log 'Yay, connection recovered!'

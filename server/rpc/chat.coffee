@@ -10,7 +10,8 @@ exports.actions = (req, res, ss) ->
 
   connect: ->
     console.log "[WS] Connected: #{req.session.userId}"
-    ss.irc(req.session.userId, 'PASS', ['inhackwetrust'])
-    ss.irc(req.session.userId, 'USER', [req.session.nick, 'WS', 'Lalo', req.session.name])
-    ss.irc(req.session.userId, 'NICK', [req.session.nick,''])
-    ss.irc(req.session.userId, 'JOIN', ['#fwd',''])
+    if req.session.userId
+      ss.irc(req.session.userId, 'PASS', ['inhackwetrust'])
+      ss.irc(req.session.userId, 'USER', [req.session.nick, 'WS', 'Lalo', req.session.name])
+      ss.irc(req.session.userId, 'NICK', [req.session.nick,''])
+      ss.irc(req.session.userId, 'JOIN', ['#fwd',''])
