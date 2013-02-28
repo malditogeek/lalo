@@ -8,17 +8,19 @@ html(lang="en")
   body
     .navbar.navbar-fixed-top
       .navbar-inner
-        .container
-          a.brand(href='#')
-            span Lalo
-            i.icon-comment
+        .container-fluid
+          .row-fluid
+            .span12
+              a.brand(href='#')
+                span Lalo
 
-    .container
-      .row
-        .span10.offset1
-          #messages
-      .row
-        .span10.offset1
-          #input
-
-      footer.footer
+    .container-fluid
+      .row-fluid
+        .span3
+          #channel
+          #roster
+        .span9
+          #chat.row-fluid
+            .span12
+              #messages
+              #input

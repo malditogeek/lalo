@@ -1,121 +1,190 @@
-ss.event.on 'privmsg', (json) ->
-  message = new Message(json)
-  App.messages.add(message)
-  #$('.message').embedly()
-
-window.InputView = Backbone.View.extend({
-
-  events: {
-    'keypress': 'send'
-  }
+InputView = Backbone.View.extend
+  
+  events: 
+    'keypress'    : 'send'
+    'click .btn'  : 'send'
 
   initialize: ->
 
-  render: (eventName) ->
-    $(this.el).html(this.template())
+  render: ->
+    $(@el).html(ss.tmpl['chat-input'].render())
     return this
 
   send: (e) ->
+    self = this
     if e.keyCode == 13
       message = $('#textbox')[0].value
+      console.log message
       if message != ''
         $('#textbox')[0].value = ''
-        ss.rpc('chat.irc', 'PRIVMSG', ['#fwd', message])
+        ss.rpc('chat.message', message, self.options.channel)
         $('#messages')[0].scrollTop = 10000
- 
-})
 
+##
+## Chat
+##
 
-window.Message = Backbone.Model.extend({
+Message = Backbone.Model.extend
   initialize: (message) ->
-    this.set 'nick',   message.nick
-    this.set 'target', message.target
-    this.set 'timestamp', new Date() # moment().calendar()
+    @set 'nick',   message.nick
+    @set 'timestamp', new Date() # moment().calendar()
+
+    # Sanitize
+    body = message.body.replace(/<|>/g, '')
 
     # Auto-link
-    if url = message.body.match(/https?:\/\/\S+/)
-      this.set 'body', message.body.replace(url[0], 
-      "<a href='#{url[0]}' target='_blank'>#{url[0]}</a>")
+    if url = body.match(/https?:\/\/\S+/)
+      @set 'body', body.replace(url[0], "<a href='#{url[0]}' target='_blank'>#{url[0]}</a>")
     else
-      this.set 'body', message.body
-})
+      @set 'body', body
 
-window.MessagesCollection = Backbone.Collection.extend({
+MessagesCollection = Backbone.Collection.extend
   model: Message
-})
 
-window.MessagesView = Backbone.View.extend({
+MessagesView = Backbone.View.extend
  
   tagName: 'ul'
   className: 'unstyled'
 
   initialize: ->
     self = this
-    this.collection.bind("reset", this.render, this)
-    this.collection.bind("add", (message) ->
+    @collection.bind("reset", this.render, this)
+    @collection.bind "add", (message) ->
       $(self.el).append(new MessageItemView({model: message}).render().el)
-    )
 
-  render: (eventName) ->
-    _.each(this.collection.models, (message) ->
-      $(this.el).append(new MessageItemView({model: message}).render().el)
-    , this)
+  render: ->
     return this
- 
-})
 
-window.MessageItemView = Backbone.View.extend({
+MessageItemView = Backbone.View.extend
 
   tagName:"li"
 
   initialize: ->
-    this.model.bind("change", this.render, this)
-    this.model.bind("destroy", this.close, this)
+    @model.bind("change", this.render, this)
+    @model.bind("destroy", this.close, this)
 
   render: ->
-    $(this.el).html(this.template(this.model.toJSON()))
-    $(this.el).embedly()
+    $(@el).html(ss.tmpl['chat-message'].render(@model.toJSON()))
+    $(@el).embedly()
     $('#messages')[0].scrollTop = 10000
     return this
 
-})
+##
+## Roster
+##
 
-AppRouter = Backbone.Router.extend({
+User = Backbone.Model.extend
+  initialize: (nick) ->
+    @set 'id'  , nick
+    @set 'nick', nick
+
+RosterCollection = Backbone.Collection.extend
+  model: User
+
+RosterView = Backbone.View.extend
  
-  routes:{
-    '/': 'root',
-  },
+  tagName: 'ul'
+  className: 'unstyled'
 
   initialize: ->
-    this.messages = new MessagesCollection()
-    this.messagesView = new MessagesView({collection: this.messages})
-    $('#messages').html(this.messagesView.render().el)
+    self = this
+    @collection.bind("reset", this.render, this)
+    @collection.bind("add", this.render, this)
+    @collection.bind("remove", this.render, this)
+    #@collection.bind "add", (message) ->
+    #  $(self.el).append(new RosterItemView({model: user}).render().el)
 
-    this.inputView = new InputView()
-    $('#input').html(this.inputView.render().el)
+  render: ->
+    $(@el).html('')
+    self = this
+    @collection.forEach (user) ->
+      $(self.el).append(new RosterItemView({model: user}).render().el)
+    return this
 
+RosterItemView = Backbone.View.extend
+
+  tagName:"li"
+
+  initialize: ->
+    @model.bind("change", this.render, this)
+    @model.bind("destroy", this.close, this)
+
+  render: ->
+    $(@el).html(ss.tmpl['chat-user'].render(@model.toJSON()))
+    return this
+
+ChannelView = Backbone.View.extend
+  render: ->
+    $(@el).html("<h1>#{@options.channel}</h1>")
+    return this
+
+window.adjust_chat = ->
+  h = $(window).height()
+  $('#chat').height(h - 80)
+  $('#messages').height(h - 140)
+  $('#messages')[0].scrollTop = 10000
+
+AppRouter = Backbone.Router.extend
+ 
+  routes:
+    ''          : 'root'
+    ':channel'  : 'join_channel'
+
+  initialize: ->
+
+  join_channel: (channel) ->
+    channel = "##{channel}"
+
+    ss.rpc 'chat.connect', channel, (roster) ->
+
+      channelView = new ChannelView({channel: channel})
+      $('#channel').html(channelView.render().el)
+
+      users = new RosterCollection()
+      rosterView = new RosterView({collection: users})
+      $('#roster').html(rosterView.render().el)
+
+      roster.forEach (user) ->
+        users.add(new User(user)) 
+
+      messages = new MessagesCollection()
+      messagesView = new MessagesView({collection: messages})
+      $('#messages').html(messagesView.render().el)
+
+      inputView = new InputView(channel: channel)
+      $('#input').html(inputView.render().el)
+
+      window.adjust_chat()
+      $(window).resize(window.adjust_chat)
+
+      window.onbeforeunload = ->
+        ss.rpc('chat.disconnect', channel)
+
+      ss.event.on 'ircd.msg', (msg) ->
+        #console.log "ircd.msg: #{JSON.stringify(msg)}"
+        m = msg.match(/:(\w+)\!\S+ (\w+) (:?#?\w+)/)
+
+        if m.length != 4
+          return
+       
+        nick  = m[1]
+        cmd   = m[2]
+        body  = m[3]
+      
+        switch cmd
+          when 'JOIN'
+            if body == channel
+              users.add(new User(nick))
+          when 'PART'
+            if body == channel
+              u = users.get(nick)
+              users.remove(u)
+
+      ss.event.on 'ircd.privmsg', (msg) ->
+        message = new Message(msg)
+        messages.add(message)
 
   root: ->
 
-})
-
-# Pre-load templates
-window.templateLoader = {
-    load: (views, callback) ->
-      deferreds = []
-      $.each(views, (index, view) ->
-        if window[view] 
-          deferreds.push($.get('templates/' + view + '.html', (data) ->
-            window[view].prototype.template = _.template(data)
-          , 'html'))
-        else 
-          alert(view + " not found")
-      )
-      $.when.apply(null, deferreds).done(callback)
-}
-
-# Pre-laod templates and start the app.
-templateLoader.load(['MessageItemView', 'InputView'], ->
-  window.App = new AppRouter()
-  Backbone.history.start()
-)
+window.App = new AppRouter()
+Backbone.history.start({pushState: true})

@@ -5,13 +5,28 @@ exports.actions = (req, res, ss) ->
   req.use('session')
 
   irc: (command, args) ->
-    console.log "[WS] #{command}, #{args}"
-    ss.irc(req.session.userId, command, args)
+    if user = req.session.userId
+      ss.serverCmd(req.session.userId, command, args)
 
-  connect: ->
-    console.log "[WS] Connected: #{req.session.userId}"
-    if req.session.userId
-      ss.irc(req.session.userId, 'PASS', ['inhackwetrust'])
-      ss.irc(req.session.userId, 'USER', [req.session.nick, 'WS', 'Lalo', req.session.name])
-      ss.irc(req.session.userId, 'NICK', [req.session.nick,''])
-      ss.irc(req.session.userId, 'JOIN', ['#fwd',''])
+  connect: (channel) ->
+    if user = req.session.userId
+      ss.serverCmd(user, 'PASS', ['inhackwetrust'])
+      ss.serverCmd(user, 'USER', [user, 'WS', 'Lalo', user])
+      ss.serverCmd(user, 'NICK', [user,''])
+      ss.serverCmd(user, 'JOIN', [channel, ''])
+
+      #ss.publish.user(user, 'notification', {message: 'Connected!'})
+
+      # Reply with the roster
+      res ss.channelRoster(channel)
+
+  disconnect: (channel) ->
+    if user = req.session.userId
+      ss.serverCmd(user, 'PART', [channel, ''])
+
+  message: (msg, channel) ->
+    if user = req.session.userId
+      ss.serverCmd(user, 'PRIVMSG', [channel, msg])
+
+  notifications: ->
+    if req.session.userId then res(true) else res(false)
