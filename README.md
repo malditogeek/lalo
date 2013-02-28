@@ -33,19 +33,19 @@ DotCloud deployment instructions.
   * Follow the instructions and clone the boilerplate
   * Your DotCloud manifest should look like this:
 
-      chat:
-          type: nodejs
-          approot: app
-          processes:
-              app: node app.js
-          config:
-              node_version: v0.8.x
-          ports:
-              www: http
-              irc: tcp
-          
-      db:
-          type: mongodb
+        chat:
+            type: nodejs
+            approot: app
+            processes:
+                app: node app.js
+            config:
+                node_version: v0.8.x
+            ports:
+                www: http
+                irc: tcp
+            
+        db:
+            type: mongodb
 
   * Deploy with: dotcloud push
 
