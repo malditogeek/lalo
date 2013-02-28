@@ -23,6 +23,10 @@ This will start an IRC server with the following details:
 
 To try the Web interface point your browser at: http://127.0.0.1:5000/channelname
 
+Lalo web client kinda looks like this:
+
+![Lalo UI](http://i.imgur.com/eGqqjSY.png)
+
 ## Deployment
 
 Since Heroku doesn't support WebSockets or arbitrary ports this won't run there. But works perfectly on DotCloud. Will add some instructions soon.
