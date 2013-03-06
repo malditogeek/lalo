@@ -1,7 +1,7 @@
 InputView = Backbone.View.extend
   
   events: 
-    'keypress'    : 'send'
+    'keypress'    : 'keypress'
     'click .btn'  : 'send'
 
   initialize: ->
@@ -10,15 +10,18 @@ InputView = Backbone.View.extend
     $(@el).html(ss.tmpl['chat-input'].render())
     return this
 
+  keypress: (e) ->
+    if e.keyCode == 13
+      this.send()
+
   send: (e) ->
     self = this
-    if e.keyCode == 13
-      message = $('#textbox')[0].value
-      console.log message
-      if message != ''
-        $('#textbox')[0].value = ''
-        ss.rpc('chat.message', message, self.options.channel)
-        $('#messages')[0].scrollTop = 10000
+    message = $('#textbox')[0].value
+    console.log message
+    if message != ''
+      $('#textbox')[0].value = ''
+      ss.rpc('chat.message', message, self.options.channel)
+      $('#messages')[0].scrollTop = 10000
 
 ##
 ## Chat
@@ -120,8 +123,8 @@ ChannelView = Backbone.View.extend
 
 window.adjust_chat = ->
   h = $(window).height()
-  $('#chat').height(h - 80)
-  $('#messages').height(h - 140)
+  $('#chat').height(h - 150)
+  $('#messages').height(h - 230)
   $('#messages')[0].scrollTop = 10000
 
 AppRouter = Backbone.Router.extend
@@ -185,6 +188,8 @@ AppRouter = Backbone.Router.extend
         messages.add(message)
 
   root: ->
+    $('#welcome').fadeIn()
+    App.navigate('welcome', trigger: true)
 
 window.App = new AppRouter()
 Backbone.history.start({pushState: true})

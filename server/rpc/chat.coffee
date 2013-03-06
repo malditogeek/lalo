@@ -10,6 +10,8 @@ exports.actions = (req, res, ss) ->
 
   connect: (channel) ->
     if user = req.session.userId
+      console.log channel
+
       ss.serverCmd(user, 'PASS', ['inhackwetrust'])
       ss.serverCmd(user, 'USER', [user, 'WS', 'Lalo', user])
       ss.serverCmd(user, 'NICK', [user,''])
