@@ -121,6 +121,12 @@ ChannelView = Backbone.View.extend
     $(@el).html("<h1>#{@options.channel}</h1>")
     return this
 
+WelcomeView = Backbone.View.extend
+  render: ->
+    $(@el).html(ss.tmpl['chat-welcome'].render())
+    return this
+
+
 window.adjust_chat = ->
   h = $(window).height()
   $('#chat').height(h - 150)
@@ -134,6 +140,11 @@ AppRouter = Backbone.Router.extend
     ':channel'  : 'join_channel'
 
   initialize: ->
+
+  root: ->
+    console.log 'root'
+    welcomeView = new WelcomeView()
+    $('#welcome').html(welcomeView.render().el)
 
   join_channel: (channel) ->
     channel = "##{channel}"
@@ -186,10 +197,6 @@ AppRouter = Backbone.Router.extend
       ss.event.on 'ircd.privmsg', (msg) ->
         message = new Message(msg)
         messages.add(message)
-
-  root: ->
-    $('#welcome').fadeIn()
-    App.navigate('welcome', trigger: true)
 
 window.App = new AppRouter()
 Backbone.history.start({pushState: true})

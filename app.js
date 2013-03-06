@@ -25,12 +25,7 @@ ss.client.define('ext', {
 
 // Serve this client on the root URL
 ss.http.route('/', function(req, res){
-  if (!req.session.userId) {
-    res.writeHead(302, {'Location': '/auth/twitter'});
-    res.end();
-  } else {
-    res.serveClient('main');
-  }
+  res.serveClient('main');
 })
 
 ss.http.route('/ext', function(req, res){
@@ -64,7 +59,7 @@ everyauth.twitter
     session.save();
     return true;
   })
-  .redirectPath('/');
+  .redirectPath('/welcome');
 
 ss.http.middleware.prepend(ss.http.connect.bodyParser());
 ss.http.middleware.append(everyauth.middleware());
